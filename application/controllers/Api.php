@@ -10,69 +10,57 @@ class Api extends RestController
 	{
 		parent::__construct();
 		$this->load->database();
+		$this->load->library('form_validation');
 	}
 
-	/**
-	 * Index Page for this controller.
-	 *
-	 * Maps to the following URL
-	 * 		http://example.com/index.php/welcome
-	 *	- or -
-	 * 		http://example.com/index.php/welcome/index
-	 *	- or -
-	 * Since this controller is set as the default controller in
-	 * config/routes.php, it's displayed at http://example.com/
-	 *
-	 * So any other public methods not prefixed with an underscore will
-	 * map to /index.php/welcome/<method_name>
-	 * @see https://codeigniter.com/userguide3/general/urls.html
-	 */
-	public function index_get()
+	public function index_get($id = null)
 	{
-		$datamahasiswa = $this->db->get('user')->result();
+		if (!empty($id)) {
 
-		if (!empty($datamahasiswa)) {
+			$datamahasiswa = $this->db->get_where('user', ['id' => $id])->result();
 
-			$this->response([
+			if (!empty($datamahasiswa)) {
 
-				'code' => 200,
-				'message' => 'Success',
-				'data' => $datamahasiswa
-			], 200);
+				$this->response([
 
+					'code' => 200,
+					'message' => 'Success',
+					'data' => $datamahasiswa
+				], 200);
+
+			} else {
+
+				$this->response([
+
+					'code' => 400,
+					'message' => 'Error',
+					'data' => null
+				], 400);
+
+			}
 		} else {
 
-			$this->response([
+			$datamahasiswa = $this->db->get('user')->result();
 
-				'code' => 400,
-				'message' => 'Error',
-				'data' => null
-			], 400);
+			if (!empty($datamahasiswa)) {
 
-		}
-	}
+				$this->response([
 
-	public function view_get($id)
-	{
-		$datamahasiswa = $this->db->get_where('user', ['id' => $id])->result();
+					'code' => 200,
+					'message' => 'Success',
+					'data' => $datamahasiswa
+				], 200);
 
-		if (!empty($datamahasiswa)) {
+			} else {
 
-			$this->response([
+				$this->response([
 
-				'code' => 200,
-				'message' => 'Success',
-				'data' => $datamahasiswa
-			], 200);
+					'code' => 400,
+					'message' => 'Error',
+					'data' => null
+				], 400);
 
-		} else {
-
-			$this->response([
-
-				'code' => 400,
-				'message' => 'Error',
-				'data' => null
-			], 400);
+			}
 
 		}
 	}
@@ -80,30 +68,72 @@ class Api extends RestController
 	public function index_post()
 	{
 
-		$data = [
-			"title" => $this->post('title'),
-			"firstName" => $this->post('firstName'),
-			'lastName' => $this->post('lastName'),
-			'picture' => $this->post('picture')
-		];
+		try {
 
-		$insertdata = $this->db->insert('user', $data);
+			$this->form_validation->set_data($this->post());
+			$this->form_validation->set_rules([
+				[
+					"field" => "title",
+					"label" => "Title",
+					"rules" => "required",
+				],
+				[
+					"field" => "firstName",
+					"label" => "FirstName",
+					"rules" => "required",
+				],
+				[
+					"field" => "lastName",
+					"label" => "LastName",
+					"rules" => "required",
+				],
+				[
+					"field" => "picture",
+					"label" => "Picture",
+					"rules" => "required",
+				],
+			]);
 
-		if ($insertdata) {
+			if (!$this->form_validation->run()) {
+
+				throw new Exception(validation_errors());
+			} else {
+
+				$data = [
+					"title" => $this->post('title'),
+					"firstName" => $this->post('firstName'),
+					'lastName' => $this->post('lastName'),
+					'picture' => $this->post('picture')
+				];
+
+				$insertdata = $this->db->insert('user', $data);
+
+				if ($insertdata) {
+
+					$this->response([
+
+						'code' => 201,
+						'message' => 'Success',
+						'data' => $insertdata
+					], 201);
+				} else {
+
+					$this->response([
+
+						'code' => 400,
+						'message' => 'Error',
+						'data' => null
+					], 400);
+				}
+
+			}
+
+		} catch (\Throwable $th) {
 
 			$this->response([
-
-				'code' => 201,
-				'message' => 'Success',
-				'data' => $insertdata
-			], 201);
-		} else {
-
-			$this->response([
-
 				'code' => 400,
-				'message' => 'Error',
-				'data' => null
+				'message' => $th->getMessage(),
+				'data' => $th->getMessage()
 			], 400);
 		}
 	}
@@ -111,58 +141,113 @@ class Api extends RestController
 	public function index_put($id)
 	{
 
-		$data = [
-			"title" => $this->put('title'),
-			"firstName" => $this->put('firstName'),
-			'lastName' => $this->put('lastName'),
-			'picture' => $this->put('picture')
-		];
+		try {
 
-		$this->db->where('id', $id);
-		$updatedata = $this->db->update('user', $data);
+			$this->form_validation->set_data($this->put());
+			$this->form_validation->set_rules([
+				[
+					"field" => "title",
+					"label" => "Title",
+					"rules" => "required",
+				],
+				[
+					"field" => "firstName",
+					"label" => "FirstName",
+					"rules" => "required",
+				],
+				[
+					"field" => "lastName",
+					"label" => "LastName",
+					"rules" => "required",
+				],
+				[
+					"field" => "picture",
+					"label" => "Picture",
+					"rules" => "required",
+				],
+			]);
 
-		if ($updatedata) {
+			if (!$this->form_validation->run()) {
+
+				throw new Exception(validation_errors());
+
+			} else {
+
+				$data = [
+					"title" => $this->put('title'),
+					"firstName" => $this->put('firstName'),
+					'lastName' => $this->put('lastName'),
+					'picture' => $this->put('picture')
+				];
+
+				$this->db->where('id', $id);
+				$updatedata = $this->db->update('user', $data);
+
+				if ($updatedata) {
+
+					$this->response([
+
+						'code' => 200,
+						'message' => 'Success',
+						'data' => $updatedata
+					], 200);
+				} else {
+
+					$this->response([
+
+						'code' => 400,
+						'message' => 'Error',
+						'data' => null
+					], 400);
+				}
+			}
+
+
+		} catch (\Throwable $th) {
+			//throw $th;
 
 			$this->response([
-
-				'code' => 200,
-				'message' => 'Success',
-				'data' => $updatedata
-			], 200);
-		} else {
-
-			$this->response([
-
 				'code' => 400,
-				'message' => 'Error',
+				'message' => $th->getMessage(),
 				'data' => null
 			], 400);
 		}
-
 	}
 
 	function index_delete($id)
 	{
 
-		$deletedata = $this->db->where('id', $id)->delete('user');
+		if (!$this->db->get_where('user', ['id' => $id])->num_rows() == 0) {
 
-		if ($deletedata) {
+			$deletedata = $this->db->where('id', $id)->delete('user');
 
-			$this->response([
+			if ($deletedata) {
 
-				'code' => 200,
-				'message' => 'Success',
-				'data' => null
-			], 200);
+				$this->response([
+
+					'code' => 200,
+					'message' => 'Success',
+					'data' => null
+				], 200);
+			} else {
+
+				$this->response([
+
+					'code' => 400,
+					'message' => 'Error',
+					'data' => null
+				], 400);
+			}
+
 		} else {
 
 			$this->response([
-
 				'code' => 400,
-				'message' => 'Error',
-				'data' => null
+				'message' => 'Data not found',
+				'data' => "[]"
 			], 400);
 		}
+
 
 	}
 }
